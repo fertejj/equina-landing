@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Equina</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Configuración de Tailwind CSS
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-dark': '#3a2f24',
+                        'accent-gold': '#b89f7f',
+                        'background-light': '#fbfaf8',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                },
+            },
+        };
+    </script>
+    <style>
+        .form-section {
+            transition: opacity 0.5s ease-in-out;
+        }
+        .toast {
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s 0.5s, opacity 0.5s linear;
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.5s linear;
+        }
+        /* Estilos para la previsualización de imágenes */
+        .image-preview-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            border: 1px solid #e0e0e0;
+        }
+        .image-preview-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        .image-preview-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .image-preview-card:hover .image-preview-overlay {
+            opacity: 1;
+        }
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 5px;
+            background-color: #34D399;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-background-light font-sans">
+
+    <div id="app-container">
+
+        <div id="login-section" class="flex items-center justify-center min-h-screen bg-primary-dark">
+            <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-center text-primary-dark">Iniciar Sesión - Admin</h2>
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="email" name="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent-gold focus:border-accent-gold">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                        <input type="password" id="password" name="password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent-gold focus:border-accent-gold">
+                    </div>
+                    <p id="login-error" class="text-sm text-red-600"></p>
+                    <div>
+                        <button type="submit" class="w-full px-4 py-2 font-bold text-white bg-accent-gold rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-gold">
+                            Ingresar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="admin-panel" class="hidden">
+            <header class="bg-primary-dark shadow-md">
+                <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+                    <h1 class="text-xl font-bold text-white">Panel de Administración de Contenido</h1>
+                    <button id="logout-button" class="px-4 py-2 text-sm font-medium text-primary-dark bg-white rounded-md hover:bg-gray-200">Cerrar Sesión</button>
+                </div>
+            </header>
+
+            <main class="container p-6 mx-auto">
+                <form id="hero-form" class="p-6 mb-8 bg-white rounded-lg shadow-md form-section">
+                    <h3 class="mb-4 text-xl font-bold border-b text-primary-dark pb-2">Sección Principal (Hero)</h3>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div><label class="block text-sm font-medium">Título</label><input id="hero-title-input" type="text" class="w-full mt-1 input-field"></div>
+                        <div><label class="block text-sm font-medium">Subtítulo</label><input id="hero-subtitle-input" type="text" class="w-full mt-1 input-field"></div>
+                        <div><label class="block text-sm font-medium">Texto del Botón (CTA)</label><input id="hero-cta-input" type="text" class="w-full mt-1 input-field"></div>
+                        <div><label class="block text-sm font-medium">URL de Imagen de Fondo</label><input id="hero-bg-input" type="url" class="w-full mt-1 input-field"></div>
+                    </div>
+                    <button type="submit" class="mt-6 save-button">Guardar Cambios de Sección Principal</button>
+                </form>
+
+                <form id="about-form" class="p-6 mb-8 bg-white rounded-lg shadow-md form-section">
+                    <h3 class="mb-4 text-xl font-bold border-b text-primary-dark pb-2">Sección "Acerca de Nosotros"</h3>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div class="md:col-span-2"><label class="block text-sm font-medium">Título</label><input id="about-title-input" type="text" class="w-full mt-1 input-field"></div>
+                        <div class="md:col-span-2"><label class="block text-sm font-medium">URL de Imagen</label><input id="about-image-input" type="url" class="w-full mt-1 input-field"></div>
+                        <div><label class="block text-sm font-medium">Párrafo 1</label><textarea id="about-p1-input" rows="4" class="w-full mt-1 input-field"></textarea></div>
+                        <div><label class="block text-sm font-medium">Párrafo 2</label><textarea id="about-p2-input" rows="4" class="w-full mt-1 input-field"></textarea></div>
+                    </div>
+                    <button type="submit" class="mt-6 save-button">Guardar Cambios de "Acerca de"</button>
+                </form>
+
+                <form id="services-form" class="p-6 mb-8 bg-white rounded-lg shadow-md form-section">
+                    <h3 class="mb-4 text-xl font-bold border-b text-primary-dark pb-2">Sección "Servicios"</h3>
+                    <div><label class="block text-sm font-medium">Título de la Sección</label><input id="services-title-input" type="text" class="w-full mt-1 input-field"></div>
+                    <div class="grid grid-cols-1 gap-8 mt-6 md:grid-cols-3">
+                        <div class="p-4 border rounded-md">
+                            <h4 class="font-semibold">Servicio 1</h4>
+                            <label class="block mt-2 text-sm font-medium">Título</label><input id="service1-title-input" type="text" class="w-full mt-1 input-field">
+                            <label class="block mt-2 text-sm font-medium">Descripción</label><textarea id="service1-desc-input" rows="3" class="w-full mt-1 input-field"></textarea>
+                        </div>
+                        <div class="p-4 border rounded-md">
+                            <h4 class="font-semibold">Servicio 2</h4>
+                            <label class="block mt-2 text-sm font-medium">Título</label><input id="service2-title-input" type="text" class="w-full mt-1 input-field">
+                            <label class="block mt-2 text-sm font-medium">Descripción</label><textarea id="service2-desc-input" rows="3" class="w-full mt-1 input-field"></textarea>
+                        </div>
+                        <div class="p-4 border rounded-md">
+                            <h4 class="font-semibold">Servicio 3</h4>
+                            <label class="block mt-2 text-sm font-medium">Título</label><input id="service3-title-input" type="text" class="w-full mt-1 input-field">
+                            <label class="block mt-2 text-sm font-medium">Descripción</label><textarea id="service3-desc-input" rows="3" class="w-full mt-1 input-field"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="mt-6 save-button">Guardar Cambios de Servicios</button>
+                </form>
+
+                <form id="gallery-form" class="p-6 mb-8 bg-white rounded-lg shadow-md form-section">
+                    <h3 class="mb-4 text-xl font-bold border-b text-primary-dark pb-2">Sección "Galería"</h3>
+                    <div><label class="block text-sm font-medium">Título de la Sección</label><input id="gallery-title-input" type="text" class="w-full mt-1 input-field"></div>
+                    
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium">Imágenes Actuales</label>
+                        <div id="gallery-images-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-2">
+                            </div>
+                    </div>
+
+                    <div class="mt-6">
+                         <label for="image-upload-input" class="px-4 py-2 text-sm text-white bg-gray-500 rounded-md hover:bg-gray-600 cursor-pointer">
+                            Seleccionar Nuevas Imágenes
+                        </label>
+                        <input type="file" id="image-upload-input" multiple accept="image/*" class="hidden">
+                    </div>
+
+                    <button type="submit" class="mt-6 save-button">Guardar Cambios de Galería</button>
+                </form>
+
+                <form id="contact-form" class="p-6 mb-8 bg-white rounded-lg shadow-md form-section">
+                    <h3 class="mb-4 text-xl font-bold border-b text-primary-dark pb-2">Sección "Contacto"</h3>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div><label class="block text-sm font-medium">Título de la Sección</label><input id="contact-title-input" type="text" class="w-full mt-1 input-field"></div>
+                        <div><label class="block text-sm font-medium">Título del Formulario</label><input id="contact-form-title-input" type="text" class="w-full mt-1 input-field"></div>
+                        <div><label class="block text-sm font-medium">Texto del Botón del Formulario</label><input id="contact-form-button-input" type="text" class="w-full mt-1 input-field"></div>
+                        <div><label class="block text-sm font-medium">Título de Información</label><input id="contact-info-title-input" type="text" class="w-full mt-1 input-field"></div>
+                        <div><label class="block text-sm font-medium">Teléfono</label><input id="contact-phone-input" type="text" class="w-full mt-1 input-field"></div>
+                        <div><label class="block text-sm font-medium">Email</label><input id="contact-email-input" type="email" class="w-full mt-1 input-field"></div>
+                        <div class="md:col-span-2"><label class="block text-sm font-medium">Dirección</label><input id="contact-address-input" type="text" class="w-full mt-1 input-field"></div>
+                    </div>
+                    <button type="submit" class="mt-6 save-button">Guardar Cambios de Contacto</button>
+                </form>
+
+                <form id="footer-form" class="p-6 mb-8 bg-white rounded-lg shadow-md form-section">
+                    <h3 class="mb-4 text-xl font-bold border-b text-primary-dark pb-2">Pie de Página (Footer)</h3>
+                    <div><label class="block text-sm font-medium">Texto de Copyright</label><input id="footer-copyright-input" type="text" class="w-full mt-1 input-field" placeholder="&copy; 2025 Equina. Todos los derechos reservados."></div>
+                    <div id="footer-links-container" class="mt-4 space-y-2">
+                        <label class="block text-sm font-medium">Redes Sociales</label>
+                        </div>
+                    <button type="button" id="add-link-button" class="px-4 py-2 mt-4 text-sm text-white bg-gray-500 rounded-md hover:bg-gray-600">Añadir Red Social</button>
+                    <button type="submit" class="mt-6 save-button">Guardar Cambios del Pie de Página</button>
+                </form>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast" class="toast fixed bottom-5 right-5 px-6 py-3 text-white bg-green-600 rounded-lg shadow-lg">
+        <p id="toast-message"></p>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZen9i8MwweadXeGndWjcrFGwOcAJOieY",
+            authDomain: "equina-arg34.firebaseapp.com",
+            projectId: "equina-arg34",
+            storageBucket: "equina-arg34.appspot.com",
+            messagingSenderId: "419671913134",
+            appId: "1:419671913134:web:0d80ae6695c8b52ae7333f",
+            measurementId: "G-6T7BHQERQD"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const contentRef = doc(db, 'pages', 'landing');
+
+        // Elementos del DOM
+        const loginSection = document.getElementById('login-section');
+        const adminPanel = document.getElementById('admin-panel');
+        const loginForm = document.getElementById('login-form');
+        const logoutButton = document.getElementById('logout-button');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+        const galleryImagesContainer = document.getElementById('gallery-images-container');
+        const imageUploadInput = document.getElementById('image-upload-input');
+        
+        let filesToUpload = []; // Almacenará los archivos nuevos para subir
+
+        // Función para mostrar notificaciones
+        function showToast(message, isError = false) {
+            toastMessage.textContent = message;
+            toast.className = `toast show fixed bottom-5 right-5 px-6 py-3 text-white rounded-lg shadow-lg ${isError ? 'bg-red-600' : 'bg-green-600'}`;
+            setTimeout(() => {
+                toast.className = toast.className.replace('show', '');
+            }, 3000);
+        }
+
+        // Crear previsualización de imagen
+        function createImagePreview(imageObject, isNew = false) {
+            const card = document.createElement('div');
+            card.className = 'image-preview-card';
+            
+            const imageUrl = isNew ? URL.createObjectURL(imageObject.file) : imageObject.url;
+            
+            card.innerHTML = `
+                <img src="${imageUrl}" alt="Previsualización">
+                <div class="image-preview-overlay">
+                    <button class="delete-image-btn p-2 bg-red-600 text-white rounded-full leading-none">&times;</button>
+                </div>
+                <div class="progress-bar"></div>
+            `;
+            
+            galleryImagesContainer.appendChild(card);
+
+            card.querySelector('.delete-image-btn').addEventListener('click', async () => {
+                if (isNew) {
+                    filesToUpload = filesToUpload.filter(f => f.file !== imageObject.file);
+                    card.remove();
+                } else {
+                    if (confirm('¿Estás seguro de que quieres borrar esta imagen? Esta acción no se puede deshacer.')) {
+                        try {
+                            card.querySelector('.delete-image-btn').disabled = true;
+                            const imageRef = ref(storage, imageObject.path);
+                            await deleteObject(imageRef);
+                            await updateDoc(contentRef, {
+                                'gallery.images': arrayRemove(imageObject)
+                            });
+                            card.remove();
+                            showToast('Imagen borrada con éxito.');
+                        } catch (error) {
+                            showToast('Error al borrar la imagen.', true);
+                            card.querySelector('.delete-image-btn').disabled = false;
+                        }
+                    }
+                }
+            });
+            return card;
+        }
+
+        // Cargar datos en los formularios
+        async function loadContentIntoForms() {
+            try {
+                const docSnap = await getDoc(contentRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // Hero
+                    document.getElementById('hero-title-input').value = data.hero?.title || '';
+                    document.getElementById('hero-subtitle-input').value = data.hero?.subtitle || '';
+                    document.getElementById('hero-cta-input').value = data.hero?.ctaText || '';
+                    document.getElementById('hero-bg-input').value = data.hero?.backgroundImage || '';
+                    // About
+                    document.getElementById('about-title-input').value = data.about?.title || '';
+                    document.getElementById('about-image-input').value = data.about?.imageUrl || '';
+                    document.getElementById('about-p1-input').value = data.about?.paragraph1 || '';
+                    document.getElementById('about-p2-input').value = data.about?.paragraph2 || '';
+                    // Services
+                    document.getElementById('services-title-input').value = data.services?.title || '';
+                    document.getElementById('service1-title-input').value = data.services?.service1?.title || '';
+                    document.getElementById('service1-desc-input').value = data.services?.service1?.description || '';
+                    document.getElementById('service2-title-input').value = data.services?.service2?.title || '';
+                    document.getElementById('service2-desc-input').value = data.services?.service2?.description || '';
+                    document.getElementById('service3-title-input').value = data.services?.service3?.title || '';
+                    document.getElementById('service3-desc-input').value = data.services?.service3?.description || '';
+                    // Gallery
+                    document.getElementById('gallery-title-input').value = data.gallery?.title || '';
+                    galleryImagesContainer.innerHTML = '';
+                    filesToUpload = [];
+                    (data.gallery?.images || []).forEach(imgObj => createImagePreview(imgObj, false));
+                    // Contact
+                    document.getElementById('contact-title-input').value = data.contact?.title || '';
+                    document.getElementById('contact-form-title-input').value = data.contact?.formTitle || '';
+                    document.getElementById('contact-form-button-input').value = data.contact?.formButtonText || '';
+                    document.getElementById('contact-info-title-input').value = data.contact?.infoTitle || '';
+                    document.getElementById('contact-phone-input').value = data.contact?.phone || '';
+                    document.getElementById('contact-email-input').value = data.contact?.email || '';
+                    document.getElementById('contact-address-input').value = data.contact?.address || '';
+                    // Footer
+                    document.getElementById('footer-copyright-input').value = data.footer?.copyright || '';
+                    const linksContainer = document.getElementById('footer-links-container');
+                    linksContainer.innerHTML = '<label class="block text-sm font-medium">Redes Sociales</label>';
+                    (data.footer?.socialLinks || []).forEach(link => addLinkInput(link));
+                }
+            } catch (error) {
+                showToast('Error al cargar el contenido.', true);
+            }
+        }
+
+        // Manejo de la autenticación
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loginSection.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                loadContentIntoForms();
+            } else {
+                loginSection.classList.remove('hidden');
+                adminPanel.classList.add('hidden');
+            }
+        });
+
+        // Login y Logout
+        loginForm.addEventListener('submit', async (e) => { e.preventDefault(); try { await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value); } catch (error) { document.getElementById('login-error').textContent = 'Email o contraseña incorrectos.'; }});
+        logoutButton.addEventListener('click', () => signOut(auth));
+
+        // Guardar datos
+        async function saveData(formData, form) {
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Guardando...';
+            try {
+                await setDoc(contentRef, formData, { merge: true });
+                showToast('¡Contenido guardado con éxito!');
+            } catch (error) {
+                showToast('Error al guardar el contenido.', true);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        }
+        
+        // Event listeners para guardar cada formulario
+        document.getElementById('hero-form').addEventListener('submit', e => { e.preventDefault(); saveData({ hero: { title: document.getElementById('hero-title-input').value, subtitle: document.getElementById('hero-subtitle-input').value, ctaText: document.getElementById('hero-cta-input').value, backgroundImage: document.getElementById('hero-bg-input').value } }, e.target); });
+        document.getElementById('about-form').addEventListener('submit', e => { e.preventDefault(); saveData({ about: { title: document.getElementById('about-title-input').value, imageUrl: document.getElementById('about-image-input').value, paragraph1: document.getElementById('about-p1-input').value, paragraph2: document.getElementById('about-p2-input').value } }, e.target); });
+        document.getElementById('services-form').addEventListener('submit', e => { e.preventDefault(); saveData({ services: { title: document.getElementById('services-title-input').value, service1: { title: document.getElementById('service1-title-input').value, description: document.getElementById('service1-desc-input').value }, service2: { title: document.getElementById('service2-title-input').value, description: document.getElementById('service2-desc-input').value }, service3: { title: document.getElementById('service3-title-input').value, description: document.getElementById('service3-desc-input').value } } }, e.target); });
+        document.getElementById('contact-form').addEventListener('submit', e => { e.preventDefault(); saveData({ contact: { title: document.getElementById('contact-title-input').value, formTitle: document.getElementById('contact-form-title-input').value, formButtonText: document.getElementById('contact-form-button-input').value, infoTitle: document.getElementById('contact-info-title-input').value, phone: document.getElementById('contact-phone-input').value, email: document.getElementById('contact-email-input').value, address: document.getElementById('contact-address-input').value } }, e.target); });
+
+        // Lógica de selección y subida para la galería
+        imageUploadInput.addEventListener('change', (e) => {
+            for (const file of e.target.files) {
+                filesToUpload.push({ file });
+                createImagePreview({ file }, true);
+            }
+            imageUploadInput.value = '';
+        });
+
+        document.getElementById('gallery-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Subiendo y Guardando...';
+
+            try {
+                const uploadPromises = filesToUpload.map(fileObject => {
+                    const filePath = `gallery/${Date.now()}_${fileObject.file.name}`;
+                    const storageRef = ref(storage, filePath);
+                    const uploadTask = uploadBytesResumable(storageRef, fileObject.file);
+                    return getDownloadURL(uploadTask.snapshot.ref).then(url => ({ url, path: filePath }));
+                });
+
+                const newImageObjects = await Promise.all(uploadPromises);
+                
+                const docSnap = await getDoc(contentRef);
+                const existingImages = docSnap.data()?.gallery?.images || [];
+                const allImages = [...existingImages, ...newImageObjects];
+
+                await setDoc(contentRef, { 
+                    gallery: { 
+                        title: document.getElementById('gallery-title-input').value,
+                        images: allImages
+                    }
+                }, { merge: true });
+
+                showToast('Galería guardada con éxito.');
+                await loadContentIntoForms();
+
+            } catch (error) {
+                showToast('Error al guardar la galería.', true);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        });
+
+        // Lógica para añadir/eliminar links del footer
+        const linksContainer = document.getElementById('footer-links-container');
+        function addLinkInput(link = { name: '', url: '' }) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 mt-2';
+            div.innerHTML = `<input type="text" value="${link.name}" class="w-1/3 input-field footer-link-name" placeholder="Nombre (ej. Facebook)"><input type="url" value="${link.url}" class="w-2/3 input-field footer-link-url" placeholder="URL"><button type="button" class="px-2 py-1 text-sm text-white bg-red-600 rounded remove-button">&times;</button>`;
+            linksContainer.appendChild(div);
+            div.querySelector('.remove-button').addEventListener('click', () => div.remove());
+        }
+        document.getElementById('add-link-button').addEventListener('click', () => addLinkInput());
+        
+        document.getElementById('footer-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const socialLinks = [...document.querySelectorAll('#footer-links-container .flex')].map(div => ({
+                name: div.querySelector('.footer-link-name').value,
+                url: div.querySelector('.footer-link-url').value,
+            })).filter(link => link.name && link.url);
+            saveData({ footer: { copyright: document.getElementById('footer-copyright-input').value, socialLinks: socialLinks } }, e.target);
+        });
+
+        // Aplicar estilos comunes a los campos
+        document.querySelectorAll('.input-field').forEach(el => el.classList.add('block', 'w-full', 'px-3', 'py-2', 'mt-1', 'text-gray-700', 'bg-white', 'border', 'border-gray-300', 'rounded-md', 'shadow-sm', 'focus:outline-none', 'focus:ring-accent-gold', 'focus:border-accent-gold'));
+        document.querySelectorAll('.save-button').forEach(el => el.classList.add('px-4', 'py-2', 'font-bold', 'text-white', 'bg-accent-gold', 'rounded-md', 'hover:bg-primary-dark'));
+
+    </script>
+</body>
+</html>
